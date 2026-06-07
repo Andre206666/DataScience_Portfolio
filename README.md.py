@@ -22,3 +22,20 @@ best customers and revenue trends.
 
 ## How to run
 python ecommerce_analytics.py
+# Sales Dashboard 📊
+
+## Business Problem
+Analyze 1000 sales transactions to identify
+top products, regions and monthly trends.
+
+## Tech Stack
+- Python (Pandas, Matplotlib, NumPy)
+
+## Key Insights
+- Top Product: Headphones ($1,145,478)
+- Top Region: East ($1,468,592)
+- Best Month: May ($525,048)
+- Worst Month: December ($295,209)
+
+## How to run
+python sales_dashboard.py
