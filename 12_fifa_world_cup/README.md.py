@@ -7,13 +7,13 @@ strength, goal trends, and a machine learning model to predict
 match outcomes.
 
 ## Tech Stack
-- Python (Pandas, NumPy)
+- Python Pandas, NumPy
 - Matplotlib
 - SQLite
-- Scikit-learn (Machine Learning)
+- Scikit-learn Machine Learning
 
 ## Key Insights
-- **USA has the best win rate (46.2%)** despite Germany having
+- **USA has the best win rate 46.2%** despite Germany having
   more total wins — win rate is a stronger indicator of
   consistency than total wins.
 - **UEFA dominates** with 174 wins, more than double CONCACAF
@@ -24,16 +24,16 @@ match outcomes.
 
 ## Machine Learning
 A Decision Tree model was trained to predict match outcomes
-(Home Win / Away Win / Draw) using team win rates as features.
+Home Win / Away Win / Draw using team win rates as features.
 The model achieved 35.6% accuracy — only marginally above random
-guessing (33%), demonstrating that synthetic random data lacks
+guessing 33%, demonstrating that synthetic random data lacks
 the real signal needed for meaningful prediction. This highlights
 the importance of using authentic historical data for production
 models.
 
 ## Limitations
 This project uses synthetic data due to data sourcing constraints.
-Future work should incorporate real historical match data (e.g.
+Future work should incorporate real historical match data e.g.
 from Kaggle's International Football Results dataset) to validate
 findings against real-world patterns.
 
