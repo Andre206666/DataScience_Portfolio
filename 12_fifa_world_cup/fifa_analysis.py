@@ -1,6 +1,11 @@
 import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
+import sqlite3
+from sklearn.model_selection import train_test_split
+from sklearn.tree import DecisionTreeClassifier
+from sklearn.metrics import accuracy_score
+
 
 teams = ['Brazil', 'Argentina', 'France', 'Germany', 'Spain', 'England', 'Mexico', 'USA']
 
@@ -112,3 +117,61 @@ plt.title('Distribution of Home Goals')
 plt.xlabel('Goals Scored')
 plt.ylabel('Frequency')
 plt.show()
+
+conn = sqlite3.connect("fifa.db")
+df.to_sql("matches", conn, if_exists="replace")
+print("Database created!")
+
+result = pd.read_sql_query("SELECT * FROM matches", conn)
+print(result)
+
+query = """
+      SELECT winner_confederation, COUNT(*) as wins
+      FROM matches
+      GROUP BY winner_confederation
+      ORDER BY wins DESC
+      """
+
+result = pd.read_sql_query(query, conn)
+print(result)
+
+query2 = """
+       SELECT home_team, SUM(home_score) as total_home_goals
+       FROM matches
+       GROUP BY home_team
+       ORDER BY total_home_goals DESC
+       LIMIT 5
+       """
+result = pd.read_sql_query(query2, conn)
+print(result)
+
+win_rate_dict = win_rate.to_dict()
+print(win_rate_dict)
+
+df["home_win_rate"] = df["home_team"].map(win_rate_dict)
+df["away_win_rate"] = df["away_team"].map(win_rate_dict)
+
+print(df[["home_team", "home_win_rate", "away_team", "away_win_rate"]].head(10))
+
+def simplify_results(row):
+    if row["winner"] == row["home_team"]:
+        return "Home win"
+    elif row["winner"] == "Draw":
+        return "Draw"
+    else:
+        return "Away win"
+
+df["result"] = df.apply(simplify_results, axis=1)
+print(df["result"].value_counts())
+
+X = df[["home_win_rate", "away_win_rate"]]
+y = df["result"]
+
+X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
+
+model = DecisionTreeClassifier()
+model.fit(X_train, y_train)
+
+predictions = model.predict(X_test)
+accuracy = accuracy_score(y_test, predictions)
+print(f"Accuracy: {accuracy:.2%}")
