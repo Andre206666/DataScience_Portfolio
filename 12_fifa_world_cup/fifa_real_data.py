@@ -69,3 +69,48 @@ query = """
      """
 result = pd.read_sql(query, conn)
 print(result)
+
+win_rate = (wins / total_matches * 100).sort_values(ascending=False)
+print(win_rate)
+
+win_rate_dict = win_rate.to_dict()
+world_cup["home_win_rate"] = world_cup["home_team"].map(win_rate_dict)
+world_cup["away_win_rate"] = world_cup["away_team"].map(win_rate_dict)
+
+print(world_cup[["home_team", "home_win_rate", "away_team", "away_win_rate"]].head(10))
+
+world_cup["home_win_rate"] = world_cup["home_win_rate"].fillna(0)
+world_cup["away_win_rate"] = world_cup["away_win_rate"].fillna(0)
+print()
+
+
+def simplify_result(row):
+    if row['winner'] == row['home_team']:
+        return "Home win"
+    elif row['winner'] == 'Draw':
+        return "Draw"
+    else:
+        return "Away win"
+
+world_cup["result"] = world_cup.apply(simplify_result, axis=1)
+print(world_cup['result'].value_counts())
+
+X = world_cup[["home_win_rate", "away_win_rate", "neutral"]]
+y = world_cup["result"]
+
+from sklearn.model_selection import train_test_split
+from sklearn.tree import DecisionTreeClassifier
+from sklearn.metrics import accuracy_score
+
+X_train, X_test, y_train, y_test = train_test_split(X, y)
+
+model = DecisionTreeClassifier(random_state=42)
+model.fit(X_train, y_train)
+
+predictions = model.predict(X_test)
+accuracy = accuracy_score(y_test, predictions)
+print(f"Accuracy: {accuracy:.2f}")
+
+
+
+

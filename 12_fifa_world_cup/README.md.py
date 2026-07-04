@@ -25,3 +25,9 @@ python fifa_real_data.py
   confirming their importance as a host nation for 2026
 - 2026 World Cup projected to have most goals ever
   due to expanded 48-team format
+
+## Machine Learning Results
+- Synthetic data model: 35.6% accuracy (barely above random 33%)
+- Real data model: 47% accuracy — significant improvement
+- Features used: home win rate, away win rate, neutral venue
+- This validates that real historical patterns improve predictions
