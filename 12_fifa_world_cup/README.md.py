@@ -31,3 +31,34 @@ python fifa_real_data.py
 - Real data model: 47% accuracy — significant improvement
 - Features used: home win rate, away win rate, neutral venue
 - This validates that real historical patterns improve predictions
+
+# FIFA World Cup 2026 Analysis ⚽
+
+## Description
+End-to-end data science project analyzing real FIFA World Cup
+data (1,036 matches, 1930-2026) to uncover historical patterns
+and predict match outcomes.
+
+## Data Source
+Real data from martj42/international_results (49,493 matches)
+Filtered to FIFA World Cup matches only.
+
+## Tech Stack
+- Python (Pandas, NumPy)
+- Matplotlib
+- SQLite
+- Scikit-learn
+
+## Key Insights
+- Brazil has the highest World Cup win rate (66.9%)
+- USA has hosted the most World Cup matches (118)
+- Home teams win significantly more (483 vs 334 away wins)
+- 2026 projected to have most goals ever (48-team format)
+
+## Machine Learning
+- Features: home win rate, away win rate, neutral venue
+- Model: Decision Tree Classifier
+- Accuracy: 43% (vs 33% random baseline)
+
+## How to run
+python fifa_real_data.py
