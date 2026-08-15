@@ -1,13 +1,11 @@
+import os
 from flask import Flask, render_template
 import pandas as pd
-from scraper import scrape_books
-from database import save_book, get_all_books, get_stats
+from database import get_all_books, get_stats
 from analysis import analyze_books
 
-import os
-app = Flask(__name__,
-            template_folder=os.path.join(os.path.dirname(__file__), 'templates'),
-            static_folder=os.path.join(os.path.dirname(__file__), 'static'))
+template_dir = os.path.abspath(os.path.dirname(__file__))
+app = Flask(__name__, template_folder=template_dir + '/templates', static_folder=template_dir + '/static')
 
 @app.route('/')
 def index():
