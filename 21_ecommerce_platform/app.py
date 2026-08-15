@@ -4,7 +4,10 @@ from scraper import scrape_books
 from database import save_book, get_all_books, get_stats
 from analysis import analyze_books
 
-app = Flask(__name__)
+import os
+app = Flask(__name__,
+            template_folder=os.path.join(os.path.dirname(__file__), 'templates'),
+            static_folder=os.path.join(os.path.dirname(__file__), 'static'))
 
 @app.route('/')
 def index():
