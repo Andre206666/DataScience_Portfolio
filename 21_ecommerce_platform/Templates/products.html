@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Products</title>
+    <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+    <h1>📚 All Books</h1>
+    <nav>
+        <a href="/">Home</a>
+        <a href="/products">Products</a>
+        <a href="/insights">Insights</a>
+    </nav>
+    <table>
+        <tr>
+            <th>Title</th>
+            <th>Price</th>
+            <th>Rating</th>
+        </tr>
+        {% for _, book in books.iterrows() %}
+        <tr>
+            <td>{{ book['title'] }}</td>
+            <td>£{{ book['price'] }}</td>
+            <td>{{ book['rating'] }}</td>
+        </tr>
+        {% endfor %}
+    </table>
+</body>
+</html>

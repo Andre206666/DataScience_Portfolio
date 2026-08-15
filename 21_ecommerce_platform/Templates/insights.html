@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Insights</title>
+    <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+    <h1>📊 Analytics Insights</h1>
+    <nav>
+        <a href="/">Home</a>
+        <a href="/products">Products</a>
+        <a href="/insights">Insights</a>
+    </nav>
+
+    <h2>💰 Top 5 Most Expensive Books</h2>
+    <table>
+        <tr><th>Title</th><th>Price</th></tr>
+        {% for _, book in expensive.iterrows() %}
+        <tr>
+            <td>{{ book['title'] }}</td>
+            <td>£{{ book['price'] }}</td>
+        </tr>
+        {% endfor %}
+    </table>
+
+    <h2>⭐ Top 5 Highest Rated Books</h2>
+    <table>
+        <tr><th>Title</th><th>Rating</th></tr>
+        {% for _, book in rated.iterrows() %}
+        <tr>
+            <td>{{ book['title'] }}</td>
+            <td>{{ book['rating_num'] }}/5</td>
+        </tr>
+        {% endfor %}
+    </table>
+</body>
+</html>
