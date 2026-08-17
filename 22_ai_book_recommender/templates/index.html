@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Book Recommender</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-900 text-white min-h-screen p-8 font-sans">
+
+    <div class="max-w-3xl mx-auto">
+        <h1 class="text-4xl font-bold mb-2 text-blue-400">AI Book Recommender</h1>
+        <p class="text-gray-400 mb-8">Tell me what you are in the mood for, and I will find the perfect books.</p>
+
+        <form id="search-form" method="POST" class="mb-12 flex gap-4">
+            <input type="text" name="query" value="{{ query }}" required
+                   placeholder="e.g. A fantasy book about dragons and political betrayal..."
+                   class="flex-1 p-4 rounded-lg bg-gray-800 border border-gray-700 text-white focus:ring-2 focus:ring-blue-500 outline-none">
+
+            <button id="submit-btn" type="submit" class="bg-blue-600 hover:bg-blue-500 px-8 py-4 rounded-lg font-bold transition">
+                Recommend
+            </button>
+        </form>
+
+        <div id="loading-spinner" class="hidden flex justify-center items-center gap-3 mb-12 text-blue-400 font-bold text-xl">
+            <svg class="animate-spin h-8 w-8 text-blue-500" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+            </svg>
+            <span>The AI is searching the library...</span>
+        </div>
+
+        <!-- Display the Books -->
+        {% if books %}
+            <h2 class="text-2xl font-semibold mb-6">Here are your recommendations:</h2>
+            <div class="space-y-6">
+                {% for book in books %}
+                    <div class="bg-gray-800 p-6 rounded-xl border border-gray-700 shadow-lg">
+                        <h3 class="text-2xl font-bold text-blue-300">{{ book.title }}</h3>
+                        <p class="text-gray-400 font-medium mb-3">by {{ book.author }}</p>
+
+                        <span class="inline-block bg-gray-700 text-sm px-3 py-1 rounded-full mb-4">
+                            {{ book.genre }}
+                        </span>
+
+                        <p class="text-gray-200 mb-4">{{ book.summary }}</p>
+
+                        <div class="bg-gray-900 p-4 rounded-lg border border-gray-700 text-sm">
+                            <span class="font-bold text-blue-400">Why this fits:</span> {{ book.reason }}
+                        </div>
+                    </div>
+                {% endfor %}
+            </div>
+        {% endif %}
+    </div>
+
+    <script>
+        document.getElementById('search-form').addEventListener('submit', function() {
+            // Hide the Recommend button
+            document.getElementById('submit-btn').style.display = 'none';
+            // Remove the 'hidden' class from the spinner
+            document.getElementById('loading-spinner').classList.remove('hidden');
+        });
+    </script>
+
+</body>
+</html>
