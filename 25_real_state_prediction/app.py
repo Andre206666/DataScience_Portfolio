@@ -1,134 +1,221 @@
-import pandas as pd
-from sklearn.ensemble import RandomForestRegressor
-from flask import Flask, request, render_template_string
+
+from pathlib import Path
 import sqlite3
 from datetime import datetime
 
-print("Downloading data...")
+import joblib
+import pandas as pd
+from flask import Flask, request, render_template_string
 
-url = "https://raw.githubusercontent.com/dsrscientist/dataset1/master/house_price_data.csv"
-df = pd.read_csv(url)
 
-df.columns = df.columns.str.lower()
+PROJECT_DIR = Path(__file__).resolve().parent
+MODEL_PATH = PROJECT_DIR / "models" / "house_price_pipeline.joblib"
+DATABASE_PATH = PROJECT_DIR / "predictions.db"
 
-numeric_cols = df.select_dtypes(include=["number"]).columns
-df[numeric_cols] = df[numeric_cols].fillna(df[numeric_cols].median())
+FEATURES = ["bedroom", "bathroom", "sqft", "floor"]
 
-df = df[df["price"] <= 2000000]
-
-X = df[['bedroom', 'bathroom', 'sqft', 'floor']]
-y = df['price']
-
-print("Training model...")
-model = RandomForestRegressor(random_state=42)
-model.fit(X, y)
-
-print("Model trained! Starting Flask server...")
-
-conn = sqlite3.connect('predictions.db')
-cursor = conn.cursor()
-cursor.execute('''
-    CREATE TABLE IF NOT EXISTS predictions (
-        timestamp TEXT,
-        bedroom REAL,
-        bathroom REAL,
-        sqft REAL,
-        floor REAL,
-        predicted_price REAL
+if not MODEL_PATH.exists():
+    raise FileNotFoundError(
+        "Model not found. Run 'python train.py' first."
     )
-''')
-conn.commit()
-conn.close()
 
+model = joblib.load(MODEL_PATH)
 app = Flask(__name__)
 
+
+def initialize_database():
+    with sqlite3.connect(DATABASE_PATH) as conn:
+        conn.execute("""
+            CREATE TABLE IF NOT EXISTS predictions (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                timestamp TEXT NOT NULL,
+                bedroom REAL NOT NULL,
+                bathroom REAL NOT NULL,
+                sqft REAL NOT NULL,
+                floor REAL NOT NULL,
+                predicted_price REAL NOT NULL
+            )
+        """)
+
+
+initialize_database()
+
+
 HTML_PAGE = """
-<h2>House Price Predictor</h2>
-<form action="/predict" method="POST">
-    Bedrooms: <input type="number" step="1" name="bedroom" required><br><br>
-    Bathrooms: <input type="number" step="0.5" name="bathroom" required><br><br>
-    Square Footage: <input type="number" step="1" name="sqft" required><br><br>
-    Floor Number: <input type="number" step="1" name="floor" required><br><br>
-    <button type="submit">Predict!</button>
-</form>
-<h3>{{ prediction_text }}</h3>
-<br>
-<a href="/history">View Prediction History (Database)</a>
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>House Price Predictor</title>
+</head>
+<body>
+    <h1>House Price Predictor</h1>
+
+    <form action="/predict" method="POST">
+        <label>Bedrooms:
+            <input type="number" name="bedroom"
+                   min="0" step="1" required>
+        </label><br><br>
+
+        <label>Bathrooms:
+            <input type="number" name="bathroom"
+                   min="0" step="0.5" required>
+        </label><br><br>
+
+        <label>Square footage:
+            <input type="number" name="sqft"
+                   min="1" step="1" required>
+        </label><br><br>
+
+        <label>Floor:
+            <input type="number" name="floor"
+                   min="0" step="1" required>
+        </label><br><br>
+
+        <button type="submit">Predict price</button>
+    </form>
+
+    {% if prediction_text %}
+        <h2>{{ prediction_text }}</h2>
+    {% endif %}
+
+    {% if error_text %}
+        <p>{{ error_text }}</p>
+    {% endif %}
+
+    <p><a href="/history">View prediction history</a></p>
+</body>
+</html>
 """
+
 
 HISTORY_PAGE = """
-<h2>Database History</h2>
-<table border="1" cellpadding="5">
-    <tr>
-        <th>Time</th>
-        <th>Bedrooms</th>
-        <th>Bathrooms</th>
-        <th>Sqft</th>
-        <th>Floor</th>
-        <th>Predicted Price</th>
-    </tr>
-    {% for row in rows %}
-    <tr>
-        <td>{{ row[0] }}</td>
-        <td>{{ row[1] }}</td>
-        <td>{{ row[2] }}</td>
-        <td>{{ row[3] }}</td>
-        <td>{{ row[4] }}</td>
-        <td>${{ "{:,.2f}".format(row[5]) }}</td>
-    </tr>
-    {% endfor %}
-</table>
-<br>
-<a href="/">Go Back to Predictor</a>
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <title>Prediction History</title>
+</head>
+<body>
+    <h1>Prediction History</h1>
+
+    <table border="1" cellpadding="6">
+        <tr>
+            <th>Time</th>
+            <th>Bedrooms</th>
+            <th>Bathrooms</th>
+            <th>Sqft</th>
+            <th>Floor</th>
+            <th>Predicted price</th>
+        </tr>
+        {% for row in rows %}
+        <tr>
+            <td>{{ row[0] }}</td>
+            <td>{{ row[1] }}</td>
+            <td>{{ row[2] }}</td>
+            <td>{{ row[3] }}</td>
+            <td>{{ row[4] }}</td>
+            <td>{{ "{:,.2f}".format(row[5]) }}</td>
+        </tr>
+        {% endfor %}
+    </table>
+
+    <p><a href="/">Back to predictor</a></p>
+</body>
+</html>
 """
 
 
-@app.route('/')
+@app.route("/")
 def home():
-    return render_template_string(HTML_PAGE, prediction_text="")
+    return render_template_string(
+        HTML_PAGE,
+        prediction_text="",
+        error_text="",
+    )
 
 
-@app.route('/predict', methods=['POST'])
+@app.route("/predict", methods=["POST"])
 def predict():
     try:
-        bedroom = float(request.form['bedroom'])
-        bathroom = float(request.form['bathroom'])
-        sqft = float(request.form['sqft'])
-        floor = float(request.form['floor'])
+        values = {
+            feature: float(request.form[feature])
+            for feature in FEATURES
+        }
 
-        input_data = pd.DataFrame([[bedroom, bathroom, sqft, floor]],
-                                  columns=['bedroom', 'bathroom', 'sqft', 'floor'])
+        if not all(
+            pd.notna(value) and value != float("inf")
+            and value != float("-inf")
+            for value in values.values()
+        ):
+            raise ValueError("Values must be finite numbers.")
 
-        prediction = model.predict(input_data)[0]
-        output = f"${prediction:,.2f}"
+        if (
+            values["bedroom"] < 0
+            or values["bathroom"] < 0
+            or values["sqft"] <= 0
+            or values["floor"] < 0
+        ):
+            raise ValueError("Please enter valid positive values.")
 
-        current_time = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-        conn = sqlite3.connect('predictions.db')
-        cursor = conn.cursor()
-        cursor.execute('''
-            INSERT INTO predictions (timestamp, bedroom, bathroom, sqft, floor, predicted_price)
-            VALUES (?, ?, ?, ?, ?, ?)
-        ''', (current_time, bedroom, bathroom, sqft, floor, prediction))
-        conn.commit()
-        conn.close()
+        if any(
+            values[field] != int(values[field])
+            for field in ("bedroom", "sqft", "floor")
+        ):
+            raise ValueError(
+                "Bedrooms, sqft, and floor must be whole numbers."
+            )
 
-        return render_template_string(HTML_PAGE, prediction_text=f'Predicted Price: {output}')
+        input_data = pd.DataFrame(
+            [[values[feature] for feature in FEATURES]],
+            columns=FEATURES,
+        )
 
-    except Exception as e:
-        return render_template_string(HTML_PAGE, prediction_text='Error: Please enter valid numbers.')
+        prediction = float(model.predict(input_data)[0])
+
+        with sqlite3.connect(DATABASE_PATH) as conn:
+            conn.execute("""
+                INSERT INTO predictions (
+                    timestamp, bedroom, bathroom,
+                    sqft, floor, predicted_price
+                )
+                VALUES (?, ?, ?, ?, ?, ?)
+            """, (
+                datetime.now().isoformat(timespec="seconds"),
+                values["bedroom"],
+                values["bathroom"],
+                values["sqft"],
+                values["floor"],
+                prediction,
+            ))
+
+        return render_template_string(
+            HTML_PAGE,
+            prediction_text=f"Predicted price: {prediction:,.2f}",
+            error_text="",
+        )
+
+    except (ValueError, TypeError, KeyError) as error:
+        return render_template_string(
+            HTML_PAGE,
+            prediction_text="",
+            error_text=f"Input error: {error}",
+        ), 400
 
 
-@app.route('/history')
+@app.route("/history")
 def history():
-    conn = sqlite3.connect('predictions.db')
-    cursor = conn.cursor()
-    cursor.execute("SELECT * FROM predictions ORDER BY timestamp DESC")
-    rows = cursor.fetchall()
-    conn.close()
+    with sqlite3.connect(DATABASE_PATH) as conn:
+        rows = conn.execute("""
+            SELECT timestamp, bedroom, bathroom,
+                   sqft, floor, predicted_price
+            FROM predictions
+            ORDER BY id DESC
+        """).fetchall()
 
-    from flask import render_template_string
     return render_template_string(HISTORY_PAGE, rows=rows)
 
 
 if __name__ == "__main__":
-    app.run(debug=True)
+    app.run(debug=False)

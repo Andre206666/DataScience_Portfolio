@@ -1,58 +1,88 @@
+
+from pathlib import Path
+
+import joblib
 import pandas as pd
-from sklearn.linear_model import LinearRegression
-from sklearn.tree import DecisionTreeRegressor
+
 from sklearn.ensemble import RandomForestRegressor
-from sklearn.metrics import r2_score
+from sklearn.impute import SimpleImputer
+from sklearn.metrics import mean_absolute_error, r2_score
 from sklearn.model_selection import train_test_split
-import pickle
-
-df = pd.read_csv("https://raw.githubusercontent.com/dsrscientist/dataset1/master/house_prices.csv")
-
-print(df.head())
-print(df.shape)
-print(df.isnull().sum())
+from sklearn.pipeline import Pipeline
 
 
-numeric_cols = df.select_dtypes(include=["number"]).columns
-df[numeric_cols] = df[numeric_cols].fillna(df[numeric_cols].median())
+PROJECT_DIR = Path(__file__).resolve().parent
+MODEL_DIR = PROJECT_DIR / "models"
+MODEL_PATH = MODEL_DIR / "house_price_pipeline.joblib"
 
-thresholds = len(df) * 0.5
-df = df.dropna(axis=1, thresh=thresholds)
+DATA_URL = (
+    "https://raw.githubusercontent.com/"
+    "dsrscientist/dataset1/master/house_price_data.csv"
+)
 
-df = df[df["SalePrice"] <= 20000]
+FEATURES = ["bedroom", "bathroom", "sqft", "floor"]
+TARGET = "price"
 
-categorical_cols = df.select_dtypes(include=["object", "category"]).columns
-for col in categorical_cols:
-    df[col] = df[col].astype("category").cat.codes
 
-df["price_per_sfqt"] = df["price"] / df["sfqt_living"]
+def main():
+    print("Loading dataset...")
+    df = pd.read_csv(DATA_URL)
+    df.columns = df.columns.str.lower()
 
-df["house_age"] = 2024 - df["house_age"]
+    required_columns = FEATURES + [TARGET]
+    missing_columns = set(required_columns) - set(df.columns)
 
-df["is_renovated"] = (df["yr_renovated"] > 0).astype(int)
+    if missing_columns:
+        raise ValueError(
+            f"Missing required columns: {sorted(missing_columns)}"
+        )
 
-X = df.drop(columns=["price", "price_per_sfqt"])
-y = df["price"]
+    df = df[required_columns].copy()
 
-X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
+    df = df.dropna(subset=[TARGET])
+    df = df[df[TARGET] > 0]
 
-models = {
-    "linear": LinearRegression(),
-    "tree": DecisionTreeRegressor(),
-    "random": RandomForestRegressor()
-}
+    df = df[df[TARGET] <= 2_000_000].copy()
 
-scores = {}
+    X = df[FEATURES]
+    y = df[TARGET]
 
-for name, model in models.items():
+    X_train, X_test, y_train, y_test = train_test_split(
+        X,
+        y,
+        test_size=0.2,
+        random_state=42,
+    )
+
+    model = Pipeline([
+        ("imputer", SimpleImputer(strategy="median")),
+        ("regressor", RandomForestRegressor(
+            n_estimators=100,
+            random_state=42,
+            n_jobs=-1,
+        )),
+    ])
+
+    print("Training model...")
     model.fit(X_train, y_train)
 
     predictions = model.predict(X_test)
 
-    score = r2_score(y_test, predictions)
-    scores[name] = score
+    r2 = r2_score(y_test, predictions)
+    mae = mean_absolute_error(y_test, predictions)
 
-    print(f"{name} R² Score: {score:.4f}")
+    print("\nEvaluation results")
+    print("------------------")
+    print(f"Training rows: {len(X_train)}")
+    print(f"Test rows: {len(X_test)}")
+    print(f"R²: {r2:.4f}")
+    print(f"MAE: {mae:,.2f} price units")
 
-best_model_name = max(scores, key=scores.get)
-print(f"\nBest Model: {best_model_name} (R² = {scores[best_model_name]:.4f})")
+    MODEL_DIR.mkdir(parents=True, exist_ok=True)
+    joblib.dump(model, MODEL_PATH)
+
+    print(f"\nModel saved to: {MODEL_PATH}")
+
+
+if __name__ == "__main__":
+    main()
