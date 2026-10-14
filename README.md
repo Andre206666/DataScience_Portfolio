@@ -4,46 +4,26 @@ Welcome to my Data Science portfolio! I'm André Pérez, a Data Science student 
 
 This repository contains projects where I apply data analysis, machine learning algorithms, model evaluation, and software development to practical problems.
 
-## 🚀 Projects
+## ⭐ Featured Projects
 
-### 1. Football Player Market Value Predictor
-**Goal:** Predict football players' market values using player profiles and performance statistics.
+### 1. Neural Network with PyTorch
+[View project](./24_neural_network/)
 
-- **Technologies:** Python, Pandas, scikit-learn, XGBoost, Matplotlib.
-- **Approach:** Data preparation, feature engineering, regression, and model evaluation against a baseline.
-- **Test results:** R² = 0.4194; MAE = 7,006,492.25 monetary units.
-- **Key learning:** Evaluating regression models and comparing them with a baseline.
+### 2. Football Player Market Value Predictor
+[View project](./23_soccer_predictor/)
 
-📂 Folder: `23_soccer_predictor`
+### 3. Real Estate Price Prediction
+[View project](./25_real_state_prediction/)
 
-### 2. Real Estate Price Prediction
-**Goal:** Estimate house prices from property characteristics.
+### 4. Sentiment Analysis
+[View project](./16_sentiment_analysis/)
 
-- **Technologies:** Python, Pandas, scikit-learn, Flask, SQLite.
-- **Approach:** Data preprocessing, a Random Forest pipeline, model evaluation, and a web application.
-- **Reported test results:** R² = 0.7749; MAE = 10,363.18 price units.
-- **Key learning:** Integrating a machine learning model into a usable application.
+### 5. Customer Segmentation
+[View project](./14_customer_segmentation/)
 
-📂 Folder: `25_real_state_prediction`
+## 📚 More Projects
 
-### 3. Breast Cancer Classification
-**Goal:** Classify breast cancer cases using diagnostic features.
-
-- **Technologies:** Python, Pandas, scikit-learn.
-- **Approach:** Classification, cross-validation, model comparison, and evaluation using classification metrics.
-- **Key learning:** Understanding model performance and the importance of recall in medical classification tasks.
-
-📂 Find the project folder in this repository.
-
-### 4. MNIST Digit Classification with PyTorch
-**Goal:** Classify handwritten digits using a neural network.
-
-- **Technologies:** Python, PyTorch.
-- **Approach:** Neural network training and evaluation on the MNIST dataset.
-- **Key learning:** Deep learning fundamentals and neural network implementation.
-
-📂 Find the project folder in this repository.
-
+Explore the repository folders for additional projects in machine learning, data analysis, SQL, APIs, dashboards, and Python development.
 ## 🛠️ Technical Skills
 
 - **Programming:** Python, SQL
